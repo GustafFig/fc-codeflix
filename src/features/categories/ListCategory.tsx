@@ -88,7 +88,7 @@ export function CategoryList() {
         </Button>
       </Box>
 
-      <div style={{ height: 300, width: '100%' }}>
+      <Box sx={{ display: "flex", height: 600 }}>
         <DataGrid
           slots={{ toolbar: GridToolbar }}
           slotProps={{
@@ -97,12 +97,15 @@ export function CategoryList() {
               quickFilterProps: { debounceMs: 500 },
             }
           }}
-          disableRowSelectionOnClick={true}
           pageSizeOptions={[25, 2, 100, 400, 22]}
           columns={columns}
           rows={rows}
+          disableRowSelectionOnClick
+          disableColumnFilter
+          disableColumnSelector
+          disableDensitySelector
         />
-      </div>
+      </Box>
     </Box>
   )
 }
