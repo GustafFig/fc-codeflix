@@ -1,21 +1,30 @@
-import { Box, Button, IconButton, Typography } from '@mui/material'
-import { deleteCategory, selectCategories } from './categorySlice';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { Link } from 'react-router-dom';
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowsProp, GridToolbar } from '@mui/x-data-grid';
+import { Box, Button, IconButton, Typography } from '@mui/material'
 import DeleteIcon from "@mui/icons-material/Delete";
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowsProp, GridToolbar } from '@mui/x-data-grid';
+import { useDeleteCategoryMutation, useGetCategoriesQuery } from './categorySlice';
+import { enqueueSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
 export function CategoryList() {
-  const categories = useAppSelector(selectCategories);
-  const dispatch = useAppDispatch();
+  const { data: { data = [] } = {}, isFetching, error } = useGetCategoriesQuery();
+  const [deleteCategory, deleteCategoryStatus] = useDeleteCategoryMutation();
 
-  const rows: GridRowsProp = categories.map((category) => ({
+  const slotProps = {
+    toolbar: {
+      showQuickFilter: true,
+      quickFilterProps: { debounceMs: 500 },
+    }
+  };
+
+  const rows: GridRowsProp = data.map((category) => ({
     id: category.id,
     name: category.name,
     description: category.description,
     isActive: category.is_active,
     createdAt: new Date(category.created_at).toLocaleDateString('pt-BR'),
   }));
+
 
   const columns: GridColDef[] = [
     {
@@ -45,9 +54,19 @@ export function CategoryList() {
     }
   ];
 
-  function handleDeleteCategory(id: string) {
-    dispatch(deleteCategory(id));
+  async function handleDeleteCategory(id: string) {
+    await deleteCategory({ id });
   }
+
+  useEffect(() => {
+    if (deleteCategoryStatus.isSuccess) {
+      enqueueSnackbar(`Category deleted`, { variant: "warning"});
+    }
+    if (deleteCategoryStatus.error) {
+      enqueueSnackbar(`Category not deleted`, { variant: "error"});
+    }
+
+  }, [deleteCategoryStatus]);
 
   function renderNameCell(rowData: GridRenderCellParams) {
     return (
@@ -97,12 +116,7 @@ export function CategoryList() {
       <Box sx={{ display: "flex", height: 600 }}>
         <DataGrid
           slots={{ toolbar: GridToolbar }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 500 },
-            }
-          }}
+          slotProps={slotProps}
           pageSizeOptions={[25, 2, 100, 400, 22]}
           columns={columns}
           rows={rows}
